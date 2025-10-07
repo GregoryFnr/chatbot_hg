@@ -3,9 +3,8 @@ import ChatWidget from "./components/ChatWidget.vue";
 </script>
 
 <template>
-  <main class="min-h-screen bg-white">
-    <!-- Placeholder content area; the widget floats over the page -->
-    <section class="max-w-5xl mx-auto px-4 py-10">
+  <main class="bg-white flex justify-center h-screen items-center">
+    <section class="min-w-[500px] md:min-w-[800px] mx-auto px-4 py-10">
       <ChatWidget />
     </section>
   </main>
