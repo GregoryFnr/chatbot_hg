@@ -44,19 +44,19 @@
           <!-- Step: choose category -->
           <div v-if="step === 'choose-category'" class="flex flex-wrap gap-2">
             <button
-              class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+              class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border"
               @click="selectCategory('restaurant')"
             >
               Restaurant
             </button>
             <button
-              class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+              class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border"
               @click="selectCategory('bar')"
             >
               Bar
             </button>
             <button
-              class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+              class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border"
               @click="selectCategory('activity')"
             >
               Activité
@@ -71,8 +71,11 @@
                 <button
                   v-for="opt in typeOptions"
                   :key="opt.value"
-                  class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
-                  :class="{ 'ring-2 ring-accent': filters.type === opt.value }"
+                  class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border"
+                  :class="{
+                    'ring-2 ring-accent bg-gray-200':
+                      filters.type === opt.value,
+                  }"
                   @click="filters.type = opt.value"
                 >
                   {{ opt.label }}
@@ -85,8 +88,10 @@
                 <button
                   v-for="b in [1, 2, 3]"
                   :key="b"
-                  class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
-                  :class="{ 'ring-2 ring-accent': filters.budget === b }"
+                  class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border"
+                  :class="{
+                    'ring-2 ring-accent bg-gray-200': filters.budget === b,
+                  }"
                   @click="filters.budget = b"
                 >
                   {{ "€".repeat(b) }}
@@ -97,15 +102,19 @@
               <p class="text-sm font-medium mb-1">Distance depuis l’hôtel</p>
               <div class="flex flex-wrap gap-2">
                 <button
-                  class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
-                  :class="{ 'ring-2 ring-accent': filters.maxWalk === 10 }"
+                  class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border"
+                  :class="{
+                    'ring-2 ring-accent bg-gray-200': filters.maxWalk === 10,
+                  }"
                   @click="filters.maxWalk = 10"
                 >
                   < 10 min à pied
                 </button>
                 <button
-                  class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
-                  :class="{ 'ring-2 ring-accent': filters.maxWalk === 20 }"
+                  class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border"
+                  :class="{
+                    'ring-2 ring-accent bg-gray-200': filters.maxWalk === 20,
+                  }"
                   @click="filters.maxWalk = 20"
                 >
                   < 20 min à pied
@@ -114,7 +123,7 @@
             </div>
             <div class="pt-1">
               <button
-                class="bg-accent text-white font-medium px-4 py-2 rounded-full shadow-lg hover:opacity-95 transition"
+                class="bg-accent text-white font-medium px-4 py-2 text-sm rounded-full shadow-lg hover:opacity-95 transition"
                 @click="showResults"
               >
                 Voir les recommandations
@@ -140,13 +149,13 @@
             </div>
             <div class="flex justify-between pt-1">
               <button
-                class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+                class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border"
                 @click="resetAll"
               >
                 Nouvelle recherche
               </button>
               <button
-                class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+                class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border"
                 @click="step = 'filters'"
               >
                 Ajuster les filtres
