@@ -82,7 +82,7 @@
                 </button>
               </div>
             </div>
-            <div>
+            <div v-if="category !== 'activity'">
               <p class="text-sm font-medium mb-1">Votre budget</p>
               <div class="flex flex-wrap gap-2">
                 <button
@@ -95,6 +95,25 @@
                   @click="filters.budget = b"
                 >
                   {{ "€".repeat(b) }}
+                </button>
+              </div>
+            </div>
+            <div v-else>
+              <p class="text-sm font-medium mb-1">Tarification</p>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border"
+                  :class="{ 'ring-2 ring-accent bg-gray-200': filters.price === 'free' }"
+                  @click="filters.price = 'free'"
+                >
+                  Gratuit
+                </button>
+                <button
+                  class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border"
+                  :class="{ 'ring-2 ring-accent bg-gray-200': filters.price === 'paid' }"
+                  @click="filters.price = 'paid'"
+                >
+                  Payant
                 </button>
               </div>
             </div>
@@ -179,15 +198,15 @@ const step = ref("choose-category"); // choose-category | filters | results
 const category = ref(null);
 const conversation = ref([]);
 
-const filters = ref({ type: null, budget: null, maxWalk: 10 });
+const filters = ref({ type: null, budget: null, price: null, maxWalk: 10 });
 
 const typeOptions = computed(() => {
   if (category.value === "restaurant") {
     return [
       { label: "Italien", value: "italian" },
-      { label: "Sud-ouest", value: "southwest" },
       { label: "Français", value: "french" },
       { label: "Asiatique", value: "asian" },
+      { label: "Fast food", value: "fastfood" },
     ];
   }
   if (category.value === "bar") {
@@ -260,7 +279,7 @@ async function showResults() {
 function resetAll() {
   step.value = "choose-category";
   category.value = null;
-  filters.value = { type: null, budget: null, maxWalk: 10 };
+  filters.value = { type: null, budget: null, price: null, maxWalk: 10 };
   results.value = [];
   conversation.value.push({
     who: "bot",

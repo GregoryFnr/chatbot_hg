@@ -3,8 +3,7 @@ import vue from "@vitejs/plugin-vue";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), ""); // charge .env (FIREWORKS_API_KEY, etc.)
-
+  const env = loadEnv(mode, process.cwd(), "");
   return {
     plugins: [
       vue(),
@@ -34,73 +33,60 @@ export default defineConfig(({ mode }) => {
 
             const { category, filters, limit = 6 } = body || {};
 
-            const apiKey = env.FIREWORKS_API_KEY;
-            if (!apiKey) {
-              res.statusCode = 500;
-              res.end("Missing FIREWORKS_API_KEY in environment");
-              return;
-            }
-
-            try {
-              const prompt = `Tu es concierge, tu travailles à l'hôtel Gascogne situé à 25 allées Charles de Fitte, 31300 Toulouse. En fonction de la catégorie (restaurant, bar, activity) et des filtres (type, budget 1-3, maxWalk minutes à pied), propose une liste JSON d'au moins 3 lieux. Chaque objet doit avoir: name, address, type, typeLabel, budget (1-3), distanceMinutes (<= ${
-                filters?.maxWalk || 25
-              }), rating (0-5), mapsUrl (Google Maps query). Respecte la catégorie: ${category}. Type attendu: ${
-                filters?.type || "any"
-              }. Budget: ${
-                filters?.budget || "any"
-              }. Réponds UNIQUEMENT avec un tableau JSON valide sans texte autour.`;
-
-              const resp = await fetch(
-                "https://api.fireworks.ai/inference/v1/chat/completions",
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${apiKey}`,
-                  },
-                  body: JSON.stringify({
-                    model: "accounts/fireworks/models/llama-v3p1-8b-instruct",
-                    messages: [
-                      {
-                        role: "system",
-                        content:
-                          "Tu renvoies uniquement du JSON strictement valide.",
-                      },
-                      { role: "user", content: prompt },
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 500,
-                  }),
-                }
-              );
-
-              if (!resp.ok) {
-                res.statusCode = resp.status;
-                res.end("AI provider error");
-                return;
-              }
-
-              const data = await resp.json();
-              const content = data?.choices?.[0]?.message?.content || "";
-              let parsed = [];
+            const searchRadii = [1200, 2000, 3000];
+            let items = [];
+            for (const r of searchRadii) {
               try {
-                parsed = JSON.parse(content);
+                const ql = buildOverpassQL(category, filters, HOTEL, r);
+                const data = await fetchOverpass(ql);
+                const nodes = (data?.elements || []).filter(
+                  (el) => el.type === "node"
+                );
+                items = nodes.map((n) => ({
+                  name: n.tags?.name || "Sans nom",
+                  address: buildAddress(n.tags),
+                  type: category === "restaurant"
+                    ? (n.tags?.amenity === "fast_food" ? "fastfood" : (filters?.type || null))
+                    : (filters?.type || null),
+                  typeLabel: mapTypeLabel(category, n.tags),
+                  budget: category !== "activity" ? null : undefined,
+                  lat: n.lat,
+                  lon: n.lon,
+                  tags: n.tags || {},
+                })).filter((p) => !!p.name);
+                if (items.length >= 3) break;
               } catch {}
-              if (!Array.isArray(parsed)) parsed = [];
-
-              // Exiger >= 3 propositions (sinon le client affichera un message)
-              if (parsed.length < 3) {
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify([]));
-                return;
-              }
-
-              res.setHeader("Content-Type", "application/json");
-              res.end(JSON.stringify(parsed.slice(0, limit)));
-            } catch (e) {
-              res.statusCode = 500;
-              res.end("AI request failed");
             }
+
+            const withDurations = [];
+            for (const it of items) {
+              try {
+                const minutes = await getWalkMinutes(HOTEL, { lat: it.lat, lon: it.lon });
+                if (minutes == null) continue;
+                it.distanceMinutes = minutes;
+                withDurations.push(it);
+              } catch {}
+            }
+
+            let results = withDurations;
+            if (filters?.maxWalk) {
+              results = results.filter((p) => p.distanceMinutes <= filters.maxWalk);
+            }
+            results.sort((a, b) => (a.distanceMinutes || 9999) - (b.distanceMinutes || 9999));
+
+            const mapped = results.map((p) => ({
+              name: p.name,
+              address: p.address,
+              type: p.type,
+              typeLabel: p.typeLabel,
+              budget: p.budget ?? null,
+              distanceMinutes: p.distanceMinutes ?? null,
+              rating: null,
+              mapsUrl: `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}`,
+            }));
+
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(mapped.slice(0, limit)));
           });
         },
       },
