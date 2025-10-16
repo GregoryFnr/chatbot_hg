@@ -1,5 +1,5 @@
-import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
+import { defineConfig, loadEnv } from "vite";
 
 // Coordinates of Hôtel Gascogne (approx). Adjust if needed.
 const HOTEL = { lat: 43.595307, lon: 1.432281 };
@@ -213,6 +213,8 @@ export default defineConfig(({ mode }) => {
               budget: p.budget ?? null,
               distanceMinutes: p.distanceMinutes ?? null,
               rating: null,
+              phone: p.tags?.phone ?? null,
+              website: p.tags?.website ?? null,
               mapsUrl: `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}`,
             }));
 
