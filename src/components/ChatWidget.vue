@@ -2,7 +2,7 @@
   <div>
     <!-- Chat Window -->
     <div
-      class="w-full mx-auto max-w-sm md:max-w-2xl"
+      class="w-full mx-auto max-w-full md:max-w-2xl"
       role="dialog"
       aria-label="Chatbot Hôtel Gascogne"
     >
@@ -255,7 +255,7 @@ async function showResults() {
     conversation.value.pop();
     if (results.value.length === 0) {
       pushBot(
-        "Désolé, aucune suggestion pour ces critères. Essayez d'ajuster les filtres."
+        "Désolé, aucune suggestion, veuillez faire une nouvelle recherche"
       );
     } else {
       pushBot("Voici ce que je peux vous proposer :");
@@ -263,7 +263,7 @@ async function showResults() {
   } catch (e) {
     conversation.value.pop();
     pushBot(
-      "Une erreur est survenue avec le service IA. Réessayez plus tard ou modifiez vos filtres."
+      "Une erreur est survenue. Réessayez plus tard ou modifiez vos filtres."
     );
   }
 

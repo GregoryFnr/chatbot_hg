@@ -4,7 +4,7 @@ import ChatWidget from "./components/ChatWidget.vue";
 
 <template>
   <main class="bg-white flex justify-center h-screen items-center">
-    <section class="min-w-[500px] md:min-w-[800px] mx-auto px-4 py-10">
+    <section class="max-w-[500px] md:max-w-[800px] mx-auto m-2 p-2">
       <ChatWidget />
     </section>
   </main>

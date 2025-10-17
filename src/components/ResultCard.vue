@@ -1,13 +1,20 @@
 <template>
   <a
-    class="block rounded-xl border border-gray-200 bg-white hover:border-accent transition p-3"
+    class="block rounded-xl border border-gray-200 bg-white hover:border-accent transition p-3 group"
     :href="place.mapsUrl"
     target="_blank"
     rel="noopener"
   >
     <div class="flex gap-3">
       <div class="flex-1 min-w-0">
-        <p class="font-medium text-gray-900 truncate">{{ place.name }}</p>
+        <div class="flex justify-between">
+          <p class="font-medium text-gray-900 truncate">{{ place.name }}</p>
+          <p
+            class="text-xs text-accent mt-2 opacity-100 md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition duration-300"
+          >
+            voir l'itinéraire
+          </p>
+        </div>
         <p class="text-xs text-gray-600 mb-2">{{ place.address }}</p>
         <div
           class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600 mb-2"
