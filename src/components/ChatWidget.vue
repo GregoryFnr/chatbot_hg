@@ -25,7 +25,7 @@
         <!-- Messages -->
         <div
           ref="scrollArea"
-          class="min-h-[60vh] max-h-[60vh] overflow-y-auto p-4 space-y-3 bg-gray-50 flex flex-col"
+          class="min-h-[60vh] max-h-[80vh] md:max-h-[70vh] overflow-y-auto p-4 space-y-3 bg-gray-50 flex flex-col"
         >
           <!-- Welcome message -->
           <ChatBubble who="bot">
