@@ -82,23 +82,7 @@
                 </button>
               </div>
             </div>
-            <div v-if="category !== 'activity'">
-              <p class="text-sm font-medium mb-1">Votre budget</p>
-              <div class="flex flex-wrap gap-2">
-                <button
-                  v-for="b in [1, 2, 3]"
-                  :key="b"
-                  class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border ease-in-out duration-200"
-                  :class="{
-                    'ring-2 ring-accent bg-gray-200': filters.budget === b,
-                  }"
-                  @click="filters.budget = b"
-                >
-                  {{ "€".repeat(b) }}
-                </button>
-              </div>
-            </div>
-            <div v-else>
+            <div v-if="category === 'activity'">
               <p class="text-sm font-medium mb-1">Tarification</p>
               <div class="flex flex-wrap gap-2">
                 <button
@@ -208,7 +192,7 @@ const step = ref("choose-category"); // choose-category | filters | results
 const category = ref(null);
 const conversation = ref([]);
 
-const filters = ref({ type: null, budget: null, price: null, maxWalk: 10 });
+const filters = ref({ type: null, price: null, maxWalk: 10 });
 
 const typeOptions = computed(() => {
   if (category.value === "restaurant") {
