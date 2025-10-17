@@ -130,7 +130,7 @@
             </div>
             <div class="pt-1 flex justify-between">
               <button
-                class="bg-accent text-white font-medium px-4 py-2 text-sm rounded-full shadow-lg hover:opacity-95 ease-in-out duration-200"
+                class="bg-accent text-white font-medium px-4 py-2 text-sm rounded-full hover:opacity-85 ease-in-out duration-200"
                 @click="showResults"
               >
                 Voir les recommandations
