@@ -34,12 +34,40 @@
           </ChatBubble>
 
           <!-- Conversation flow -->
-          <template v-for="(entry, idx) in conversation" :key="idx">
-            <ChatBubble v-if="entry.who === 'bot'" who="bot">{{
-              entry.text
-            }}</ChatBubble>
-            <ChatBubble v-else who="user">{{ entry.text }}</ChatBubble>
-          </template>
+          <TransitionGroup
+            tag="div"
+            class="flex flex-col gap-3"
+            enter-from-class="opacity-0 translate-y-2"
+            enter-active-class="transition duration-300 ease-out"
+            leave-to-class="opacity-0"
+            leave-active-class="transition duration-200 ease-in"
+          >
+            <ChatBubble
+              v-for="(entry, idx) in conversation"
+              :key="idx"
+              :who="entry.who === 'bot' ? 'bot' : 'user'"
+            >
+              {{ entry.text }}
+            </ChatBubble>
+          </TransitionGroup>
+
+          <!-- Typing indicator -->
+          <ChatBubble v-if="isTyping" who="bot">
+            <span class="inline-flex items-center gap-1">
+              <span
+                class="inline-block h-2 w-2 rounded-full bg-gray-400 animate-bounce"
+                style="animation-delay: 0ms"
+              ></span>
+              <span
+                class="inline-block h-2 w-2 rounded-full bg-gray-400 animate-bounce"
+                style="animation-delay: 120ms"
+              ></span>
+              <span
+                class="inline-block h-2 w-2 rounded-full bg-gray-400 animate-bounce"
+                style="animation-delay: 240ms"
+              ></span>
+            </span>
+          </ChatBubble>
 
           <!-- Step: choose category -->
           <div v-if="step === 'choose-category'" class="flex flex-wrap gap-2">
@@ -130,9 +158,14 @@
             </div>
             <div class="pt-1 flex justify-between">
               <button
-                class="bg-accent text-white font-medium px-4 py-2 text-sm rounded-full hover:opacity-85 ease-in-out duration-200"
+                class="bg-accent text-white font-medium px-4 py-2 text-sm rounded-full hover:opacity-85 ease-in-out duration-200 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center"
+                :disabled="isLoading"
                 @click="showResults"
               >
+                <span
+                  v-if="isLoading"
+                  class="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"
+                ></span>
                 Voir les recommandations
               </button>
               <button
@@ -154,11 +187,28 @@
               :
             </div>
             <div class="grid gap-3">
-              <ResultCard
-                v-for="(p, i) in displayResults"
-                :key="i"
-                :place="p"
-              />
+              <!-- Skeletons while loading -->
+              <template v-if="isLoading">
+                <div
+                  v-for="n in 6"
+                  :key="'sk-' + n"
+                  class="rounded-xl border border-gray-200 p-3 bg-white animate-pulse"
+                >
+                  <div class="h-4 w-2/3 bg-gray-200 rounded mb-2"></div>
+                  <div class="h-3 w-1/2 bg-gray-200 rounded mb-3"></div>
+                  <div class="flex gap-2">
+                    <div class="h-5 w-20 bg-gray-200 rounded-full"></div>
+                    <div class="h-5 w-24 bg-gray-200 rounded-full"></div>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <ResultCard
+                  v-for="(p, i) in displayResults"
+                  :key="i"
+                  :place="p"
+                />
+              </template>
             </div>
             <div class="flex justify-between pt-1">
               <button
@@ -224,7 +274,7 @@ function pushUser(text) {
   conversation.value.push({ who: "user", text });
 }
 
-function selectCategory(cat) {
+async function selectCategory(cat) {
   category.value = cat;
   pushUser(
     cat === "restaurant"
@@ -233,16 +283,25 @@ function selectCategory(cat) {
       ? "Je cherche un bar."
       : "Je cherche une activité."
   );
+  isTyping.value = true;
+  await new Promise((r) => setTimeout(r, 500));
   pushBot("Très bien. Précisez vos préférences ci-dessous, s’il vous plaît :");
+  isTyping.value = false;
   step.value = "filters";
 }
 
 const results = ref([]);
 const displayResults = computed(() => results.value.slice(0, 6));
+const isLoading = ref(false);
+const isTyping = ref(false);
 
 async function showResults() {
   pushUser("Voir les recommandations.");
   pushBot("Je prépare des suggestions...");
+  isTyping.value = true;
+  isLoading.value = true;
+  // Show results step immediately to render skeletons
+  step.value = "results";
 
   try {
     const recs = await getRecommendations({
@@ -265,9 +324,10 @@ async function showResults() {
     pushBot(
       "Une erreur est survenue. Réessayez plus tard ou modifiez vos filtres."
     );
+  } finally {
+    isTyping.value = false;
+    isLoading.value = false;
   }
-
-  step.value = "results";
 }
 
 function resetAll() {
