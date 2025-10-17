@@ -4,6 +4,26 @@ import { defineConfig, loadEnv } from "vite";
 // Coordinates of Hôtel Gascogne (approx). Adjust if needed.
 const HOTEL = { lat: 43.595307, lon: 1.432281 };
 
+// Simple in-memory caches with TTL
+const OVERPASS_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const OSRM_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const overpassCache = new Map(); // key -> { at: number, data: any }
+const osrmCache = new Map(); // key -> { at: number, data: any }
+
+function getCached(map, key, ttlMs) {
+  const entry = map.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.at > ttlMs) {
+    map.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCached(map, key, data) {
+  map.set(key, { at: Date.now(), data });
+}
+
 function bboxFromCenter(lat, lon, meters) {
   const dLat = meters / 111111;
   const dLon = meters / (111111 * Math.cos((lat * Math.PI) / 180));
@@ -51,18 +71,20 @@ function buildOverpassQL(category, filters, hotel, radiusMeters) {
   }
 
   const ql = `
-    [out:json][timeout:25];
+    [out:json][timeout:15];
     (
-      ${selector}(${s},${w},${n},${e});
+      ${selector}(around:${radiusMeters},${hotel.lat},${hotel.lon});
     );
-    out body;
-    >;
-    out skel qt;
+    out tags center;
   `;
   return ql;
 }
 
 async function fetchOverpass(ql) {
+  const cacheKey = ql;
+  const cached = getCached(overpassCache, cacheKey, OVERPASS_TTL_MS);
+  if (cached) return cached;
+
   const resp = await fetch("https://overpass-api.de/api/interpreter", {
     method: "POST",
     headers: {
@@ -71,7 +93,9 @@ async function fetchOverpass(ql) {
     body: new URLSearchParams({ data: ql }),
   });
   if (!resp.ok) throw new Error("Overpass error");
-  return resp.json();
+  const json = await resp.json();
+  setCached(overpassCache, cacheKey, json);
+  return json;
 }
 
 function tagText(tags, keys, fallback = "") {
@@ -92,12 +116,17 @@ function buildAddress(tags) {
 
 async function getWalkMinutes(from, to) {
   const url = `https://router.project-osrm.org/route/v1/foot/${from.lon},${from.lat};${to.lon},${to.lat}?overview=false&alternatives=false&steps=false`;
+  const cacheKey = url;
+  const cached = getCached(osrmCache, cacheKey, OSRM_TTL_MS);
+  if (cached != null) return cached;
   const resp = await fetch(url);
   if (!resp.ok) throw new Error("OSRM error");
   const data = await resp.json();
   const seconds = data?.routes?.[0]?.duration ?? null;
   if (!seconds) return null;
-  return Math.ceil(seconds / 60);
+  const minutes = Math.ceil(seconds / 60);
+  setCached(osrmCache, cacheKey, minutes);
+  return minutes;
 }
 
 function mapTypeLabel(category, tags) {
