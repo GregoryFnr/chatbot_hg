@@ -11,13 +11,13 @@
       >
         <!-- Header -->
         <div class="flex items-center gap-3 px-4 py-3 bg-primary text-white">
+          <!--
           <img src="/logo_hg.png" alt="Hôtel Gascogne" class="h-20" />
+          -->
           <div>
-            <p class="font-semibold leading-tight">
-              Votre Concierge · Hôtel Gascogne
-            </p>
+            <p class="font-semibold leading-tight">Votre Concierge</p>
             <p class="text-white/80 text-xs leading-tight">
-              25 allées Charles de Fitte · 31300 Toulouse
+              Place de la Concorde
             </p>
           </div>
         </div>
@@ -178,14 +178,10 @@
           </div>
 
           <!-- Step: results -->
-          <div v-if="step === 'results'" class="space-y-3">
+          <div v-if="results.length > 0" class="space-y-3">
             <p class="text-sm text-gray-600">
               Et voilà quelques suggestions selon vos critères :
             </p>
-            <div v-if="results.length === 0" class="text-sm text-gray-600">
-              Aucun résultat exact. Voici des options proches de vos préférences
-              :
-            </div>
             <div class="grid gap-3">
               <!-- Skeletons while loading -->
               <template v-if="isLoading">
@@ -232,10 +228,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { getRecommendations } from "../services/recommendation";
 import ChatBubble from "./ChatBubble.vue";
 import ResultCard from "./ResultCard.vue";
-import { getRecommendations } from "../services/recommendation";
 
 const open = ref(true);
 const step = ref("choose-category"); // choose-category | filters | results
