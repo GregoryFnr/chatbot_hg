@@ -15,9 +15,9 @@
           <img src="/logo_hg.png" alt="Hôtel Gascogne" class="h-20" />
           -->
           <div>
-            <p class="font-semibold leading-tight">Votre Concierge</p>
+            <p class="font-semibold leading-tight">Chatbot Hôtel Gascogne</p>
             <p class="text-white/80 text-xs leading-tight">
-              Place de la Concorde
+              votre assistant virtuel
             </p>
           </div>
         </div>
@@ -206,6 +206,98 @@
                 />
               </template>
             </div>
+
+            <!-- Inline filters panel below results -->
+            <div v-if="showInlineFilters" class="mt-4 space-y-3">
+              <p class="text-sm font-medium mb-1">Affiner votre recherche</p>
+              <div>
+                <p class="text-sm font-medium mb-1">
+                  Type de
+                  {{
+                    category === "bar"
+                      ? "bar"
+                      : category === "activity"
+                      ? "d'activité"
+                      : "cuisine"
+                  }}
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="opt in typeOptions"
+                    :key="opt.value"
+                    class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border ease-in-out duration-200"
+                    :class="{
+                      'ring-2 ring-accent bg-gray-200':
+                        filters.type === opt.value,
+                    }"
+                    @click="filters.type = opt.value"
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
+              </div>
+              <div v-if="category === 'activity'">
+                <p class="text-sm font-medium mb-1">Tarification</p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border ease-in-out duration-200"
+                    :class="{
+                      'ring-2 ring-accent bg-gray-200':
+                        filters.price === 'free',
+                    }"
+                    @click="filters.price = 'free'"
+                  >
+                    Gratuit
+                  </button>
+                  <button
+                    class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border ease-in-out duration-200"
+                    :class="{
+                      'ring-2 ring-accent bg-gray-200':
+                        filters.price === 'paid',
+                    }"
+                    @click="filters.price = 'paid'"
+                  >
+                    Payant
+                  </button>
+                </div>
+              </div>
+              <div>
+                <p class="text-sm font-medium mb-1">Distance depuis l’hôtel</p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border ease-in-out duration-200"
+                    :class="{
+                      'ring-2 ring-accent bg-gray-200': filters.maxWalk === 10,
+                    }"
+                    @click="filters.maxWalk = 10"
+                  >
+                    < 10 min à pied
+                  </button>
+                  <button
+                    class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border ease-in-out duration-200"
+                    :class="{
+                      'ring-2 ring-accent bg-gray-200': filters.maxWalk === 20,
+                    }"
+                    @click="filters.maxWalk = 20"
+                  >
+                    < 20 min à pied
+                  </button>
+                </div>
+              </div>
+              <div class="pt-1">
+                <button
+                  class="bg-accent text-white font-medium px-4 py-2 text-sm rounded-full hover:opacity-85 ease-in-out duration-200 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center"
+                  :disabled="isLoading"
+                  @click="showResults"
+                >
+                  <span
+                    v-if="isLoading"
+                    class="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"
+                  ></span>
+                  Mettre à jour les résultats
+                </button>
+              </div>
+            </div>
             <div class="flex justify-between pt-1">
               <button
                 class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border ease-in-out duration-200"
@@ -215,7 +307,23 @@
               </button>
               <button
                 class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border ease-in-out duration-200"
-                @click="step = 'filters'"
+                @click="goToFilters()"
+              >
+                Ajuster les filtres
+              </button>
+            </div>
+          </div>
+          <div v-else-if="step === 'results' && !isLoading">
+            <div class="flex justify-between pt-1">
+              <button
+                class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border ease-in-out duration-200"
+                @click="resetAll"
+              >
+                Nouvelle recherche
+              </button>
+              <button
+                class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 border ease-in-out duration-200"
+                @click="goToFilters()"
               >
                 Ajuster les filtres
               </button>
@@ -290,12 +398,14 @@ const results = ref([]);
 const displayResults = computed(() => results.value.slice(0, 6));
 const isLoading = ref(false);
 const isTyping = ref(false);
+const showInlineFilters = ref(false);
 
 async function showResults() {
   pushUser("Voir les recommandations.");
   pushBot("Je prépare des suggestions...");
   isTyping.value = true;
   isLoading.value = true;
+  showInlineFilters.value = false;
   // Show results step immediately to render skeletons
   step.value = "results";
 
@@ -324,6 +434,12 @@ async function showResults() {
     isTyping.value = false;
     isLoading.value = false;
   }
+}
+
+async function goToFilters() {
+  // Do not change step; reveal filters inline after results
+  pushUser("Ajuster les filtres.");
+  showInlineFilters.value = true;
 }
 
 function resetAll() {
